@@ -296,7 +296,7 @@ void do_modifyinfo_self(int socketfd,MSG *msg) //修改函数
 
 	case 4:
 		printf("请输入新年龄:");
-		scanf("%d",&(msg->argcge));
+		scanf("%d",&(msg->age));
 		break;
 	}
 
