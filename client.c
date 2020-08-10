@@ -16,7 +16,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-
+#define I 0//用户登录
 #define A 1//增加用户
 #define D 2//删除用户
 #define M 3//修改用户信息
@@ -87,23 +87,36 @@ int do_login()
 {
 	int n;
 	int ret=0;//用来接收超级用户 还是普通用户1 超级用户 2 普通用户
-	char s;  
-	printf("**************************************\n");
-	printf("     欢 迎 访 问 员 工 管 理 系 统    \n");
-	printf("    1:登 录, 2:注 册 用 户, 3:退 出   \n");
-	printf("**************************************\n");
-	scanf("%d",&n);
-
-	if(n == 2)
+	char s; 
+	while(1)
 	{
-		do_adduser(socketfd,&msg,2);
-		do_login();
-	}
-	if(n == 3)
-	{
-		exit(0);
-	}
+		printf("**************************************\n");
+		printf("     欢 迎 访 问 员 工 管 理 系 统    \n");
+		printf("    1:登 录, 2:注 册 用 户, 3:退 出   \n");
+		printf("**************************************\n");
+		scanf("%d",&n);
+		if(n == 1)
+		{
+			break;
+		}
 
+		else if(n == 2)
+		{
+			do_adduser(socketfd,&msg,2);
+		}
+
+		else if(n == 3)
+		{
+			exit(0);
+		}
+
+		else
+		{
+			printf("输入错误，请重新输入");
+			continue;
+		}
+
+	}
 	while(1)
 	{
 		printf("请输入用户名:");
@@ -118,6 +131,7 @@ int do_login()
 			perror("scanf");
 			exit(-1);
 		}
+		msg.com = 0;
 		send(socketfd,&msg,sizeof(MSG),0);
 		recv(socketfd,&ret,sizeof(ret),0);
 
@@ -311,7 +325,7 @@ void do_usermenu()//用户菜单
 // 添加用户函数,第三个参数判断是注册还是管理员添加,1代表管理员，2代表普通用户
 void do_adduser(int socketfd,MSG *msg,int mode) 
 {
-	int ret=0;
+	int ret;
 	printf("请输入用户名:");
 	if(scanf("%s",msg->account)<=0)
 	{
@@ -334,20 +348,21 @@ void do_adduser(int socketfd,MSG *msg,int mode)
 	if(ret==1)//表示添加成功
 	{
 		printf("添加用户成功\n");
+		if(mode == 1)
+		{
+			do_rootmenu();	
+		}
+		else
+		{
+			do_login();
+		}
 	}
 	else
 	{
-		printf("添加用户失败\n");
+		printf("添加用户失败,用户名已存在\n");
+		return ;
 	}
-	
-	if(mode == 1)
-	{
-		do_login();	
-	}
-	else
-	{
-		do_rootmenu();
-	}
+
 }
 
 void do_delectuser(int socketfd,MSG *msg) //删除用户函数

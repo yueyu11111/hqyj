@@ -20,7 +20,9 @@
 #include <string.h>
 #include <sqlite3.h>
 #include <signal.h>
+#include <errno.h>
 
+#define I 0   //用户登录
 #define A 1   //增加用户
 #define D 2   //删除用户
 #define M 3   //修改用户
@@ -48,6 +50,7 @@ typedef struct {        //定义通讯双方的结构体
 	int start_num_history; //按条件查询历史记录起始编号
 	int end_num_history; //按条件查询历史记录结束编号
 }MSG;
+MSG msg;
 
 void cli_info(struct sockaddr_in cin);
 void do_client(int newfd,sqlite3 *db); 
@@ -62,27 +65,39 @@ int main(int argc,const char *argv[])
 	FILE *fp;
 	sqlite3 *db;
 	int sockfd,clientfd;
+	char *errmsg;
+
 	printf("******等待用户访问*******\n");
-	if((fp = fopen("mydata.db","a+")) == NULL)
+
+	if(sqlite3_open("./mydata.db",&db) !=SQLITE_OK)//打开数据库
 	{
-		perror("fail to fopen 44");
+		printf("fail to open database\n");
 		return -1;
 	}
+	else
+		printf("open database successfully\n");
 
-//	MSG root ={
-//		.type = 1,
-//		.name = "root",
-//		.data = "123456",
-//	};
-//	if(fread(&tmp,sizeof(MSG),1,fp) != 1)
-//	{
-//		fwrite(&root,sizeof(MSG),1,fp);
-//		fclose(fp);
-//	}
-//	else
-//	{
-//		fclose(fp);
-//	}
+	//创建表
+	if(sqlite3_exec(db, 
+				"create table if not exists usr(account text primary key, data text,name text, id integer, salary integer,address text, age integer);",
+				NULL, NULL, &errmsg) != SQLITE_OK)
+	{
+		printf("%s\n", errmsg);
+	}
+	else
+		printf("Create or open usr table success.\n");
+
+	if(sqlite3_exec(db,
+				"create table if not exists record(name text ,data text,time text);",
+				NULL, NULL, &errmsg) != SQLITE_OK)
+	{
+		printf("%s\n", errmsg);
+	}
+	else
+		printf("Create or open record table success.\n");
+
+
+
 
 	signal(SIGCHLD,sig_child_handle); //子进程结束后，会给父进程发送这个信号
 
@@ -122,7 +137,7 @@ int main(int argc,const char *argv[])
 		bzero(&cin,sizeof(cin));
 		newfd = accept(sockfd,(struct sockaddr *)&cin,&addrlen);
 		if(newfd <0){
-			perror("accept");
+		//	perror("accept");
 			continue;
 		}
 
@@ -159,12 +174,14 @@ void cli_info(struct sockaddr_in cin)
 
 void do_client(int newfd,sqlite3 *db)
 {
-	MSG msg;
 	while(recv(newfd, &msg,sizeof(msg),0)>0)
 	{
-		printf("type: %d\n",msg.com);
+		printf("com: %d\n",msg.com);
 		switch(msg.com)
 		{
+		case I:
+			do_login(newfd, &msg, db);
+			break;
 		case A:
 			do_register(newfd, &msg, db);
 			break;
@@ -183,17 +200,47 @@ void do_client(int newfd,sqlite3 *db)
 		case Q:
 			do_exit(newfd, &msg, db);
 			break;
+		default:
+			printf("error: unknown command\n");
 		}
 	}
+	printf("client exit\n");
+	close(newfd);
+	exit(0);
 }
 int do_register(int socketfd,MSG *msg, sqlite3 *db)
 {
+	char * errmsg;
+	char sql[500];
+	int ret =-1;
+	sprintf(sql, "insert into usr values('%s', '%s',NULL,NULL,NULL,NULL,NULL);", msg->account, msg->data);
+	printf("%s\n", sql);
 
+	if(sqlite3_exec(db,sql, NULL, NULL, &errmsg) != SQLITE_OK)
+	{
+		printf("%s\n", errmsg);
+		strcpy(msg->data, "usr name already exist.");
+		ret = -1;
+		send(socketfd,&ret,sizeof(ret),0);
+	}
+	else
+	{
+		ret = 1;
+		printf("client  register ok!\n");
+		strcpy(msg->data, "OK!");
+		send(socketfd,&ret,sizeof(ret),0);
+	}
+		return 0;
 }
 
 int do_delectuser(int socketfd,MSG *msg, sqlite3 *db)
 {
-
+	char * errmsg;
+	char sql[500];
+	int ret =-1;
+	sprintf(sql, "delete from user where account =\"%s\"", msg->account);
+	printf("%s\n", sql);
+	
 }
 
 int do_modifyinfo(int socketfd,MSG *msg, sqlite3 *db)
@@ -216,7 +263,10 @@ int do_exit(int socketfd,MSG *msg, sqlite3 *db)
 
 }
 
-
+int do_login(int socketfd,MSG *msg, sqlite3 *db)
+{
+	printf("666");
+}
 
 
 
