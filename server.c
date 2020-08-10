@@ -162,8 +162,8 @@ void do_client(int newfd,sqlite3 *db)
 	MSG msg;
 	while(recv(newfd, &msg,sizeof(msg),0)>0)
 	{
-		printf("type: %d\n",msg.type);
-		switch(msg.type)
+		printf("type: %d\n",msg.com);
+		switch(msg.com)
 		{
 		case A:
 			do_register(newfd, &msg, db);
@@ -186,12 +186,35 @@ void do_client(int newfd,sqlite3 *db)
 		}
 	}
 }
-int do_register(int socketfd,MSG *msg, sqlite3 *db){}
-int do_delectuser(int socketfd,MSG *msg, sqlite3 *db){}
-int do_modifyinfo(int socketfd,MSG *msg, sqlite3 *db){}
-int do_selectinfo(int socketfd,MSG *msg, sqlite3 *db){}
-int do_selectlogin(int socketfd,MSG *msg, sqlite3 *db){}
-int do_exit(int socketfd,MSG *msg, sqlite3 *db){}
+int do_register(int socketfd,MSG *msg, sqlite3 *db)
+{
+
+}
+
+int do_delectuser(int socketfd,MSG *msg, sqlite3 *db)
+{
+
+}
+
+int do_modifyinfo(int socketfd,MSG *msg, sqlite3 *db)
+{
+
+}
+
+int do_selectinfo(int socketfd,MSG *msg, sqlite3 *db)
+{
+
+
+}
+int do_selectlogin(int socketfd,MSG *msg, sqlite3 *db)
+{
+
+}
+
+int do_exit(int socketfd,MSG *msg, sqlite3 *db)
+{
+
+}
 
 
 
